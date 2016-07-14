@@ -1,0 +1,17 @@
+Controlls:
+
+Arrows = navigate brick through game area (x and z axis)
+ Space =  drop brick
+     e = rotate on x
+     r = rotate on x
+     d = rotate on y
+     f = rotate on y
+     c = rotate on z
+     v = rotate on z
+
+     1 = rotate game area
+     2 = rotate game area cw
+     3 = zoom
+     4 = zoom
+     q = set gamearea to original perspective
+

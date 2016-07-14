@@ -129,6 +129,7 @@ void error_callback(int error, const char* description)
 {
 	fputs(description, stderr);
 }
+bool cheating;
 float turnXg;
 float turnYg;
 float turnZg;
@@ -600,11 +601,13 @@ void draw() {								//Zeichnet den Schacht
 				sendMVP();
 				vec3* temp = new vec3(x, y, z);
 
-				if (*temp == falling->helpstone.shadow_elems[0].koordinate ||
-					*temp == falling->helpstone.shadow_elems[1].koordinate ||
-					*temp == falling->helpstone.shadow_elems[2].koordinate ||
-					*temp == falling->helpstone.shadow_elems[3].koordinate) {
-					drawShadowCube();
+				if (cheating) {
+					if (*temp == falling->helpstone.shadow_elems[0].koordinate ||
+						*temp == falling->helpstone.shadow_elems[1].koordinate ||
+						*temp == falling->helpstone.shadow_elems[2].koordinate ||
+						*temp == falling->helpstone.shadow_elems[3].koordinate) {
+						drawShadowCube();
+					}
 				}
 			/*	if (*temp == falling->shadowstone.shadow_elems[0].koordinate ||
 					*temp == falling->shadowstone.shadow_elems[1].koordinate ||
@@ -651,43 +654,29 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 	case GLFW_KEY_A:
 		break;
-	case GLFW_KEY_W:
-		zoom += 1.5;
-		break;
+	
 	case GLFW_KEY_S:
-		zoom -= 1.5;
 		break;
 	case GLFW_KEY_Q:
-		turnXg = turnYg = turnZg = turnX = turnY = turnZ = turnX1 = turnY1 = turnZ1 = turnX2 = turnY2 = turnZ2 = 0.0;
+		turnXg = turnYg = turnZg = turnX = turnY = turnZ = turnX1 = turnY1 = turnZ1 = turnX2 = turnY2 = turnZ2 = zoom = 0.0;
 		break;
 	case GLFW_KEY_1:
-		turnX += 2.5;
-		break;
-	case GLFW_KEY_2:
-		turnX -= 2.5;
-		break;
-	case GLFW_KEY_3:
 		turnY += 2.5;
 		break;
-	case GLFW_KEY_4:
+	case GLFW_KEY_2:
 		turnY -= 2.5;
 		break;
-	case GLFW_KEY_5:
-		turnZ += 2.5;
-		break;
-	case GLFW_KEY_6:
-		turnZ -= 2.5;
-		break;
-	case GLFW_KEY_7:
+	case GLFW_KEY_3:
 		zoom += 2.5;
 		break;
-	case GLFW_KEY_8:
+	case GLFW_KEY_4:
 		zoom -= 2.5;
 		break;
-	case GLFW_KEY_9:
-		break;
-	case GLFW_KEY_O:
+	case GLFW_KEY_SPACE:
 		turboDrop();
+		break;
+	case GLFW_KEY_W:
+		cheating = !cheating;
 		break;
 	}
 
@@ -713,19 +702,19 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		case GLFW_KEY_E:
 			falling->drehen('x', true, false);
 			break;
-		case GLFW_KEY_D:
+		case GLFW_KEY_R:
 			falling->drehen('x', false, false);
 			break;
-		case GLFW_KEY_R:
+		case GLFW_KEY_D:
 			falling->drehen('y', true, false);
 			break;
 		case GLFW_KEY_F:
 			falling->drehen('y', false,false);
 			break;
-		case GLFW_KEY_T:
+		case GLFW_KEY_C:
 			falling->drehen('z', true, false);
 			break;
-		case GLFW_KEY_G:
+		case GLFW_KEY_V:
 			falling->drehen('z', false, false);
 			break;
 
