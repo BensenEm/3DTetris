@@ -588,6 +588,12 @@ void deleteCompleteLines(std::set<vec3, compareVec3> delcubes) {
 	timer2.reset();
 
 }
+void turningY(bool direction) {
+	for (int i = 0; i <= 45; i = i + 2.25) {
+		if(direction) turnY = turnY + i;
+		else turnY = turnY - i;
+	}
+}
 
 void draw() {								//Zeichnet den Schacht
 
@@ -660,12 +666,6 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	case GLFW_KEY_Q:
 		turnXg = turnYg = turnZg = turnX = turnY = turnZ = turnX1 = turnY1 = turnZ1 = turnX2 = turnY2 = turnZ2 = zoom = 0.0;
 		break;
-	case GLFW_KEY_1:
-		turnY += 2.5;
-		break;
-	case GLFW_KEY_2:
-		turnY -= 2.5;
-		break;
 	case GLFW_KEY_3:
 		zoom += 2.5;
 		break;
@@ -675,14 +675,20 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	case GLFW_KEY_SPACE:
 		turboDrop();
 		break;
-	case GLFW_KEY_W:
-		cheating = !cheating;
-		break;
 	}
 
 	if (action == GLFW_PRESS) {
 		switch (key) {
 
+		case GLFW_KEY_1:
+			turningY(true);
+			break;
+		case GLFW_KEY_2:
+			turningY(false);
+			break;
+		case GLFW_KEY_W:
+			cheating = !cheating;
+			break;
 		case GLFW_KEY_ESCAPE:
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
