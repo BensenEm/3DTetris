@@ -144,7 +144,9 @@ float turnY2;
 float turnZ2;
 
 float zoom;
+// Startperspektive=1;
 
+int current_perspective = 0;
 std::vector<GLuint> textures;
 std::vector<GLuint> ttextures;
 
@@ -316,8 +318,14 @@ void initSchacht() {
 
 
 void drawShadowCube() {
-	glBindTexture(GL_TEXTURE_2D, textures.at(3));
-	drawWireCube();
+	glm::mat4 Save = Model;
+	glBindTexture(GL_TEXTURE_2D, 0);	
+	Model = glm::translate(Model, glm::vec3(0, -.99, 0));
+	Model = glm::scale(Model, glm::vec3(1, .01, 1));
+	sendMVP();
+	drawCube();
+	Model = Save;
+	sendMVP();
 }
 
 void drawTexCube(int c) {
@@ -589,10 +597,18 @@ void deleteCompleteLines(std::set<vec3, compareVec3> delcubes) {
 
 }
 void turningY(bool direction) {
-	for (int i = 0; i <= 45; i = i + 2.25) {
+	for (int i = 0; i <= 90; i = i + 2) {
 		if(direction) turnY = turnY + i;
 		else turnY = turnY - i;
 	}
+	if (direction)current_perspective = (current_perspective+1) % 4;
+	else {
+		if ((current_perspective - 1) % 4 == -1) {
+			current_perspective = current_perspective + 3;
+		}
+		else current_perspective = (current_perspective - 1) % 4;
+	};
+	std::cout << current_perspective << std::endl;
 }
 
 void draw() {								//Zeichnet den Schacht
@@ -607,20 +623,6 @@ void draw() {								//Zeichnet den Schacht
 				sendMVP();
 				vec3* temp = new vec3(x, y, z);
 
-				if (cheating) {
-					if (*temp == falling->helpstone.shadow_elems[0].koordinate ||
-						*temp == falling->helpstone.shadow_elems[1].koordinate ||
-						*temp == falling->helpstone.shadow_elems[2].koordinate ||
-						*temp == falling->helpstone.shadow_elems[3].koordinate) {
-						drawShadowCube();
-					}
-				}
-			/*	if (*temp == falling->shadowstone.shadow_elems[0].koordinate ||
-					*temp == falling->shadowstone.shadow_elems[1].koordinate ||
-					*temp == falling->shadowstone.shadow_elems[2].koordinate ||
-					*temp == falling->shadowstone.shadow_elems[3].koordinate) {
-					drawShadowCube();
-				}*/
 				if (
 					*temp == falling->cube_elems[0].koordinate ||
 					*temp == falling->cube_elems[1].koordinate ||
@@ -628,6 +630,21 @@ void draw() {								//Zeichnet den Schacht
 					*temp == falling->cube_elems[3].koordinate) {
 					drawTexCube(falling->cube_elems[0].col);
 					//drawCube();
+				}
+				if (cheating) {
+					if (*temp == falling->helpstone.shadow_elems[0].koordinate ||
+						*temp == falling->helpstone.shadow_elems[1].koordinate ||
+						*temp == falling->helpstone.shadow_elems[2].koordinate ||
+						*temp == falling->helpstone.shadow_elems[3].koordinate) {
+						glBindTexture(GL_TEXTURE_2D, 0);
+						drawWireCube();
+					}
+				}
+				if (*temp == falling->shadowstone.shadow_elems[0].koordinate ||
+					*temp == falling->shadowstone.shadow_elems[1].koordinate ||
+					*temp == falling->shadowstone.shadow_elems[2].koordinate ||
+					*temp == falling->shadowstone.shadow_elems[3].koordinate) {
+						drawShadowCube();
 				}
 
 				else if (schacht_array[x - 1][y - 1][z - 1] != transparent) {
@@ -665,6 +682,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 		break;
 	case GLFW_KEY_Q:
 		turnXg = turnYg = turnZg = turnX = turnY = turnZ = turnX1 = turnY1 = turnZ1 = turnX2 = turnY2 = turnZ2 = zoom = 0.0;
+		current_perspective = 0;
 		break;
 	case GLFW_KEY_3:
 		zoom += 2.5;
@@ -693,16 +711,69 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			glfwSetWindowShouldClose(window, GL_TRUE);
 			break;
 		case GLFW_KEY_RIGHT:
-			falling->bewegen('x', 1);
+			switch (current_perspective) {
+			case 0:
+				falling->bewegen('x', 1);
+				break;
+			case 1:
+				falling->bewegen('z', -1);
+				break;
+			case 2:
+				falling->bewegen('x', -1);
+				break;
+			case 3:
+				falling->bewegen('z', 1);
+				break;
+			}
+
 			break;
 		case GLFW_KEY_LEFT:
-			falling->bewegen('x', -1);
+			switch (current_perspective) {
+			case 0: 
+				falling->bewegen('x', -1);
+				break;
+			case 1: 
+				falling->bewegen('z', 1);
+				break;
+			case 2: 
+				falling->bewegen('x', 1);
+				break;
+			case 3: 
+				falling->bewegen('z', -1);
+				break;
+			}
 			break;
 		case GLFW_KEY_UP:
-			falling->bewegen('z', -1);
+			switch (current_perspective) {
+			case 0: 
+				falling->bewegen('z', -1);
+				break;
+			case 1: 
+				falling->bewegen('x', -1);
+				break;
+			case 2: 
+				falling->bewegen('z', 1);
+				break;
+			case 3: 
+				falling->bewegen('x', 1);
+				break;
+			}
 			break;
 		case GLFW_KEY_DOWN:
-			falling->bewegen('z', 1);
+			switch (current_perspective) {
+			case 0: 
+				falling->bewegen('z', 1);
+				break;
+			case 1: 
+				falling->bewegen('x', 1);
+				break;
+			case 2: 
+				falling->bewegen('z', -1);
+				break;
+			case 3: 
+				falling->bewegen('x', -1);
+				break;
+			}
 			break;
 
 		case GLFW_KEY_E:
