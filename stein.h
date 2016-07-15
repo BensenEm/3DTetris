@@ -58,6 +58,13 @@ struct stein {
 			cube_elems.push_back(cube((xLen / 2), yLen, zLen / 2, col));
 			break;
 
+		case 5: //T-stein
+			cube_elems.push_back(cube((xLen / 2), yLen - 1, zLen / 2, col));
+			cube_elems.push_back(cube((xLen / 2) - 1, yLen, zLen / 2, col));
+			cube_elems.push_back(cube((xLen / 2), yLen, zLen / 2, col));
+			cube_elems.push_back(cube((xLen / 2) + 1, yLen, zLen / 2, col));
+
+			break;
 		};
 		//printf("blub");
 		updateShadow();
@@ -273,7 +280,7 @@ void dropStein(int value) {
 
 		falling->kopiere_in_schacht();
 		srand(time(NULL));		
-		int	randStone = rand() % 4 + 1;
+		int	randStone = rand() % 5 + 1;
 		int randColor = rand() % 5 + 1;
 		falling = new stein(randStone, color(randColor));
 	}

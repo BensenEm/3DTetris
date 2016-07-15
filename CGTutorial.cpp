@@ -325,7 +325,7 @@ void drawShadowCube() {
 	sendMVP();
 	drawCube();
 	Model = Save;
-	sendMVP();
+	//sendMVP();
 }
 
 void drawTexCube(int c) {
@@ -623,14 +623,6 @@ void draw() {								//Zeichnet den Schacht
 				sendMVP();
 				vec3* temp = new vec3(x, y, z);
 
-				if (
-					*temp == falling->cube_elems[0].koordinate ||
-					*temp == falling->cube_elems[1].koordinate ||
-					*temp == falling->cube_elems[2].koordinate ||
-					*temp == falling->cube_elems[3].koordinate) {
-					drawTexCube(falling->cube_elems[0].col);
-					//drawCube();
-				}
 				if (cheating) {
 					if (*temp == falling->helpstone.shadow_elems[0].koordinate ||
 						*temp == falling->helpstone.shadow_elems[1].koordinate ||
@@ -640,13 +632,22 @@ void draw() {								//Zeichnet den Schacht
 						drawWireCube();
 					}
 				}
-				if (*temp == falling->shadowstone.shadow_elems[0].koordinate ||
-					*temp == falling->shadowstone.shadow_elems[1].koordinate ||
-					*temp == falling->shadowstone.shadow_elems[2].koordinate ||
-					*temp == falling->shadowstone.shadow_elems[3].koordinate) {
+				if (!cheating) {
+					if (*temp == falling->shadowstone.shadow_elems[0].koordinate ||
+						*temp == falling->shadowstone.shadow_elems[1].koordinate ||
+						*temp == falling->shadowstone.shadow_elems[2].koordinate ||
+						*temp == falling->shadowstone.shadow_elems[3].koordinate) {
 						drawShadowCube();
+					}
 				}
-
+				if (
+					*temp == falling->cube_elems[0].koordinate ||
+					*temp == falling->cube_elems[1].koordinate ||
+					*temp == falling->cube_elems[2].koordinate ||
+					*temp == falling->cube_elems[3].koordinate) {
+					drawTexCube(falling->cube_elems[0].col);
+					//drawCube();
+				}
 				else if (schacht_array[x - 1][y - 1][z - 1] != transparent) {
 					drawTexCube(schacht_array[x - 1][y - 1][z - 1]);
 					//drawCube();
