@@ -1,3 +1,10 @@
+/*
+* Kuerteil fuer den CG-Kurs SoSe 2016 von
+* Benjamin Molnar und Igor Turanin
+*
+* Umsetzung von 3D Tetris
+*/
+
 // Include standard headers
 #include <stdio.h>
 #include <stdlib.h>
@@ -38,92 +45,7 @@ using namespace glm;
 #include "cube.h"
 #include "stein.h"
 #include "timer.h"
-// Erklären ObenGL-Statemachine, lowlevel
-// Version 1: seit 1992, elegantes API für die Plattformunabhägige 3D-Programmierung 
-// Version 2: seit 2002, Ergänzung durch Shader-Programme, die auf Grafikkarte laufen
-// Version 3: seit 2008, Fixedfunction-Pipeline nur noch als Compability-Extension
-// Version 4: seit 2010 noch kaum unterstützt
-// Wir setzen nun auf Version 3, schwieriger zu erlernen als Version 1
-// glm-Bibliothek für Matrix-Operationen (fehlen in Version3), glew-Bibliothek, um API-Funktionen > 1.1 nutzen zu können
-// glfw-Bibliothek, um OpenGL plattformunabhängig nutzen zu können (z. B. Fenster öffnen)
-#define UEBUNG1 /* feste Rotation */
-// Pflichtteil: Ergebnis zeigen ...
-// Kode zeilenweise erklären. (Orientiert sich an http://www.opengl-tutorial.org/, Evtl. diese Tutorials dort ausführen, um zu vertiefen.)
-// Dort wird glfw in der Version 2 genutzt, wir verwenden die aktuelle Version 3 http://www.glfw.org/
-// Schwarze Linien wg. Shader. Kurz erklaeren, was die Shader machen...
-// Vorgehensweise erklaeren, Jeweils alte cpp-Datei nach CGTutorial.cpp.n kopieren, damit jede Aenderung nachvollziehbar bleibt.
-// (Voraussetzung fuer Support)
-// Aufgabe Rotation: glm::rotate    (http://glm.g-truc.net/glm.pdf)
-#define UEBUNG2 /* variable Rotation ueber R-Taste */
-// Eventloop, kann man muss man aber nicht in glfw (Alternativ Glut, dort muss man)
-// Aufgabe: Hinweis globale Variable, Taste...
-#define UEBUNG3 /* Kamerasteuerung */
-// Aufgabe drei Unabhängige Rotationen, wird zu erstem Teil des Pflichtteils
-// Hinweis auf andere Kaperasteuerungen ->  http://www.opengl-tutorial.org
-#define UEBUNG4 /* Ausgemaltes Objekt und Z-Buffer */
-// OpenGL-Befehle: http://wiki.delphigl.com/index.php/Hauptseite auf Deutsch!
-// GLEW http://glew.sourceforge.net/
-// Wireframe vs. Solid thematisieren, Z-Buffer wird noetig, um Verdeckungsproblem zu lösen
-// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-4-a-colored-cube/
-///////////////////////////////////////////////////////
-#define UEBUNG5 /* Einlesen eines Objekts */
-// http://www.opengl-tutorial.org/beginners-tutorials/tutorial-7-model-loading/
-// Bessere OBJ-Loader vorhanden, basieren aber auf OpenGL1.1
-// Andere Formate möglich, z. B. 3ds, s. a. Link am Ende der Seite
-// Wir nehmen Teapot, Anekdote zu Teapot:  von Newell 1975 (hat berühmtes Lehrbuch geschrieben) glut, 3dsmax, Toystory, Monster AG, ...
-//
-// Vertex Buffer Objects (VBO) (ab 1.5) enthalten alle Daten zu Oberflaechen eines Objekts (Eckpunktkoordinaten, Normalen, Texturkoordinaten -> Uebung 6)
-// koennen in separatem Speicher einer Grafikkarte gehalten werden (haengt vom Modell ab)
-// koennen ueber API-Aufrufe veraendert werden --> glBufferData, glMapBuffer (GL_STATIC_DRAW, um mitzuteilen, dass sich nichts aendern wird)
-// Vertex Array Objects (VAO) (ab 3) kapseln mehrere VBOs eines Objects zwecks Optimierung und einfachrer Benutzung:
-// Beim Zeichnen nur 2 Aufrufe: glBindVertexArray und glDrawArrays
-//#define UEBUNG5TEDDY  /* Nach der Teddy-Übung fuer Uebung6 wieder ausschalten */
-// Alternativ: Teddy wenn die Zeit reicht: google nach teddy chameleon, teapot.obj mit xxx.obj austauschen....
-// Modellieren kann also auch einfach sein, Freies Tool Blender (open Source), Professionelle Werkzeuge Maya, 3dsmax, etc. (nicht gegenstand der LV)
-#define UEBUNG6 /* Beleuchten, neuer Shader */
-// Teddy-Modell hat keine Normalen, passt nicht zu Shadern, wieder zur Teekanne zurueck.
-// Shader anschauen, Alter Shader "ColourFragmentShader" setzt Farbe direkt, wird interpoliert ("Gouraud-Shading")
-// "TransformVertexShader" gibt Farben weiter, legt layout der Eingabe-Daten fest, verwendet MVP um Eckpunkte zu transvormieren ("Eine Matrix reicht")
-// Neue Shader koennen mehr (Immer noch nicht, was die Fixed-Function-Pipeline konnte) 
-// Normalen stehen senkrecht auf Oberflaechen, wichtig fuer die Beleuchtung
-// Normalen muessen anders behandelt werden als Eckpunkte, deshalb Trennung von MVP in Model View Projection
-// -> Shader verändern in Uebung 15
-#define UEBUNG7 /* Texturieren */
-// Farbtexturen sind digitale Rasterbilder (andere Texturen in Kombination moeglich "Multi-Texturing" nicht Gegenstand der Uebung -> VL Textur)
-// Imageloader fuer png und jpg nicht in den Bibliotheken enthalten -> SOIL
-// DDS-Format kompatibel zu Texturkompression der Hardware. Wir nehmen aber BMP !
-// s. a.:  http://www.opengl-tutorial.org/beginners-tutorials/tutorial-5-a-textured-cube/, Achtung glfwLoadTexture2D gibt' nicht mehr in glfw-version 3
-// Granularitaet: Textur pro Objekt. kann also gewechselt werden ! --> Uebung 8
-// Texturierte Teekanne ist 2. Teil des Pflichtteils 
-///////////////////////////////////////////////////////
-#define UEBUNG8 /* Mehrere Objekte */
-// Polygone bilden Objekt, Objekte haben eigene Transformationen ("Model"-Matrix) eigene Texturen, etc.
-// VAOs abwechselnd binden, MVP-Matrizen abwechselnd setzen, ggf Texturen abwechselnd binden, OpenGL verwendet jeweils positive Zahlen als
-// Namen, die man sich generieren lassen muss.
-// Model-Matrix fuer jedes Objekt anders, Szenen haben meist hierarchische Struktur, Multiplikationskette von der Wurzel zum Blatt
-// Roboter-Beispiel, um Ketten zu lernen
-#define UEBUNG9 /* Koordinatenachse */
-// Notwendigkeit Koordinatensysteme anzeigen zu lassen... -> drawCS-Funktion mit drei Balkenen
-// Wie erhaelt man langen duennen Balken mit bekannten Geometrien ?
-// Aufgabe: Balken (leider mit M, V, P, ... als Parameter) Hinweis ginge auch als Singleton...
-// Skalierungsparameter ruhig ausprobieren.
-// sieht man den Balken im Bauch der Teekanne ?
-#define UEBUNG10 /* Koordinatenkreuz */
-// Aufgabe: Drei Balken, spaeter entsteht die Notwendigkeit Matrizen zu sichern (evtl. Mechanismus von OpenGL1 erwaehnen)
-#define UEBUNG11 /* Ein Robotersegment */
-// Teekanne ausblenden, Kugel zeichnen, Transformationsreihenfolge nochmal thematisieren
-// Aufgabe: -Funktion mit Parameter!
-#define UEBUNG12 /* Drei Robotersegmente uebereinander */
-// Aufgabe: statischer Roboter, Unterschied lokales vs. globales Translate
-#define UEBUNG13 /* Rotationen in den Gelenken */
-// Aufgabe Roboter mit Tastensteuerung, Reihenfolge der Transformationen von oben nach unten und umgekehrt mit Stiften erläutern
-#define UEBUNG14 /* Lampe am Ende */
-// Uebung 15 im StandardShading pixelshader
-// Hier mal exemplarisch den Pixelshader aendern, um die Beleuchtung ansprechender zu machen
-// Erwaehnen, dass man Parameter wie "MVP" kontrollieren koennte.
-// Hier beginnt die Wellt der Shader-programmierung, die nicht Gegenstand der Uebung ist.
-// Lampe am Ende eines steuerbaren Roboters ist dritter Teil des Pflichtteils
-// (5 Punkte: 3 Rotationen, Teekanne, texturiert, Roboter, Licht am Ende) 
+
 
 void error_callback(int error, const char* description)
 {
@@ -319,7 +241,7 @@ void initSchacht() {
 
 void drawShadowCube() {
 	glm::mat4 Save = Model;
-	glBindTexture(GL_TEXTURE_2D, 0);	
+	glBindTexture(GL_TEXTURE_2D, 0);
 	Model = glm::translate(Model, glm::vec3(0, -.99, 0));
 	Model = glm::scale(Model, glm::vec3(1, .01, 1));
 	sendMVP();
@@ -353,9 +275,9 @@ void randTiles() {
 
 
 void drawTiles() {
-	
+
 	//int randColor = rand() % 5 + 1;
-	
+
 	glm::mat4 Save = Model;
 	Model = glm::translate(Model, glm::vec3(0, -10, 0));
 
@@ -375,8 +297,8 @@ void drawTiles() {
 			sendMVP();
 			//drawWireCube();
 
-			drawTexCube(tileTextures[5+(i*(xLen-1)+j)]);
-//			drawTexCube(tileTextures[15]);
+			drawTexCube(tileTextures[5 + (i*(xLen - 1) + j)]);
+			//			drawTexCube(tileTextures[15]);
 
 
 		}
@@ -386,8 +308,8 @@ void drawTiles() {
 
 }
 float wallsize = .1;
-GLuint backgroundID=0;
-GLuint vertexbuffer=0;
+GLuint backgroundID = 0;
+GLuint vertexbuffer = 0;
 GLuint uvbuffer = 0;
 
 void createBackground() {
@@ -399,8 +321,8 @@ void createBackground() {
 	};
 
 	static const GLfloat backgroundImageBuffer[] = {
-	0,1,    0,0,   1,0,
-	0,1,    1,1,   1,0
+		0,1,    0,0,   1,0,
+		0,1,    1,1,   1,0
 	};
 
 	glGenVertexArrays(1, &backgroundID);
@@ -411,8 +333,8 @@ void createBackground() {
 	// Give our vertices to OpenGL.
 	glBufferData(GL_ARRAY_BUFFER, sizeof(backgroundBuffer), backgroundBuffer, GL_STATIC_DRAW);
 	glEnableVertexAttribArray(0);
-	
-	
+
+
 	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer);
 	glVertexAttribPointer(
 		0,                  // attribute 0. No particular reason for 0, but must match the layout in the shader.
@@ -463,27 +385,27 @@ void drawBackground() {
 	glDrawArrays(GL_TRIANGLES, 0, 6); // Starting from vertex 0; 3 vertices total -> 1 triangle
 	glBindVertexArray(0);
 	glEnable(GL_DEPTH_TEST);
-									  //glDisableVertexAttribArray(0);
+	//glDisableVertexAttribArray(0);
 }
 
 
 
 void drawWallX() {
 	glm::mat4 Save = Model;
-	Model = glm::translate(Model, glm::vec3(0,0,0));
+	Model = glm::translate(Model, glm::vec3(0, 0, 0));
 	Model = glm::rotate(Model, 45.0f, glm::vec3(0, 1, 0));
 	Model = glm::scale(Model, glm::vec3(2, 2, 2));
 	/*for (int i = 0; i < yLen; i++) {
-		for (int j = 0; j < xLen; j++) {
-			Model = glm::translate(Model, glm::vec3(2 * cus, 0, 0));
-			sendMVP();
-			*/
+	for (int j = 0; j < xLen; j++) {
+	Model = glm::translate(Model, glm::vec3(2 * cus, 0, 0));
+	sendMVP();
+	*/
 	glBindTexture(GL_TEXTURE_2D, textures.at(1));
 	sendMVP();
-			drawCube();
+	drawCube();
 
-		/*}
-		Model = glm::translate(Model, glm::vec3(2 * cus*(-xLen), 2 * cus, 0));
+	/*}
+	Model = glm::translate(Model, glm::vec3(2 * cus*(-xLen), 2 * cus, 0));
 	};*/
 	Model = Save;
 
@@ -549,18 +471,18 @@ std::set<vec3, compareVec3> completedLines() {
 	// multiplikator first attempt
 	//int multiplikator = lines;
 	/*if(lines > 1) {
-		for (int i = 2; i <= lines; i++ ) {
-			multiplikator *= 1.5;
-		}
+	for (int i = 2; i <= lines; i++ ) {
+	multiplikator *= 1.5;
+	}
 	}*/
 	int points_to_add = (vanishing_cubes.size() / 2) * 10;
 	points_to_add *= multiplikator;
 	points += points_to_add;
 	return vanishing_cubes;
 }
-	timer timer1 = timer();
-	timer timer2 = timer();
-	timer timer3 = timer();
+timer timer1 = timer();
+timer timer2 = timer();
+timer timer3 = timer();
 /*
 Überschreibt gelöschte cubes mit den von oben nachrückenden cubes
 */
@@ -568,10 +490,10 @@ void deleteCompleteLines(std::set<vec3, compareVec3> delcubes) {
 	blinkFlag = false;
 	if (!gameover)SoundEngine->play2D("irrKlang-1.5.0/media/yay.mp3", false, false, false);
 
-	
+
 	old_schacht = schacht_array;
 	uebergangs_schacht = schacht_array;
-	
+
 	std::set<vec3, compareVec3>::iterator it1;
 	for (it1 = delcubes.begin(); it1 != delcubes.end(); ++it1) {
 		uebergangs_schacht[(it1->x) - 1][(it1->y) - 1][(it1->z) - 1] = transparent;
@@ -598,10 +520,10 @@ void deleteCompleteLines(std::set<vec3, compareVec3> delcubes) {
 }
 void turningY(bool direction) {
 	for (int i = 0; i <= 90; i = i + 2) {
-		if(direction) turnY = turnY + i;
+		if (direction) turnY = turnY + i;
 		else turnY = turnY - i;
 	}
-	if (direction)current_perspective = (current_perspective+1) % 4;
+	if (direction)current_perspective = (current_perspective + 1) % 4;
 	else {
 		if ((current_perspective - 1) % 4 == -1) {
 			current_perspective = current_perspective + 3;
@@ -623,6 +545,22 @@ void draw() {								//Zeichnet den Schacht
 				sendMVP();
 				vec3* temp = new vec3(x, y, z);
 
+				if (
+					*temp == falling->cube_elems[0].koordinate ||
+					*temp == falling->cube_elems[1].koordinate ||
+					*temp == falling->cube_elems[2].koordinate ||
+					*temp == falling->cube_elems[3].koordinate) {
+					drawTexCube(falling->cube_elems[0].col);
+					//drawCube();
+				}
+				else if (schacht_array[x - 1][y - 1][z - 1] != transparent) {
+					drawTexCube(schacht_array[x - 1][y - 1][z - 1]);
+					//drawCube();
+					//drawCube(schacht_array[x][y][z].col)
+				}
+				else {
+					//	drawWireCube();
+				}
 				if (cheating) {
 					if (*temp == falling->helpstone.shadow_elems[0].koordinate ||
 						*temp == falling->helpstone.shadow_elems[1].koordinate ||
@@ -639,22 +577,6 @@ void draw() {								//Zeichnet den Schacht
 						*temp == falling->shadowstone.shadow_elems[3].koordinate) {
 						drawShadowCube();
 					}
-				}
-				if (
-					*temp == falling->cube_elems[0].koordinate ||
-					*temp == falling->cube_elems[1].koordinate ||
-					*temp == falling->cube_elems[2].koordinate ||
-					*temp == falling->cube_elems[3].koordinate) {
-					drawTexCube(falling->cube_elems[0].col);
-					//drawCube();
-				}
-				else if (schacht_array[x - 1][y - 1][z - 1] != transparent) {
-					drawTexCube(schacht_array[x - 1][y - 1][z - 1]);
-					//drawCube();
-					//drawCube(schacht_array[x][y][z].col)
-				}
-				else {
-					//	drawWireCube();
 				}
 				delete temp;
 
@@ -678,7 +600,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 	{
 	case GLFW_KEY_A:
 		break;
-	
+
 	case GLFW_KEY_S:
 		break;
 	case GLFW_KEY_Q:
@@ -730,48 +652,48 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			break;
 		case GLFW_KEY_LEFT:
 			switch (current_perspective) {
-			case 0: 
+			case 0:
 				falling->bewegen('x', -1);
 				break;
-			case 1: 
+			case 1:
 				falling->bewegen('z', 1);
 				break;
-			case 2: 
+			case 2:
 				falling->bewegen('x', 1);
 				break;
-			case 3: 
+			case 3:
 				falling->bewegen('z', -1);
 				break;
 			}
 			break;
 		case GLFW_KEY_UP:
 			switch (current_perspective) {
-			case 0: 
+			case 0:
 				falling->bewegen('z', -1);
 				break;
-			case 1: 
+			case 1:
 				falling->bewegen('x', -1);
 				break;
-			case 2: 
+			case 2:
 				falling->bewegen('z', 1);
 				break;
-			case 3: 
+			case 3:
 				falling->bewegen('x', 1);
 				break;
 			}
 			break;
 		case GLFW_KEY_DOWN:
 			switch (current_perspective) {
-			case 0: 
+			case 0:
 				falling->bewegen('z', 1);
 				break;
-			case 1: 
+			case 1:
 				falling->bewegen('x', 1);
 				break;
-			case 2: 
+			case 2:
 				falling->bewegen('z', -1);
 				break;
-			case 3: 
+			case 3:
 				falling->bewegen('x', -1);
 				break;
 			}
@@ -787,7 +709,7 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
 			falling->drehen('y', true, false);
 			break;
 		case GLFW_KEY_F:
-			falling->drehen('y', false,false);
+			falling->drehen('y', false, false);
 			break;
 		case GLFW_KEY_C:
 			falling->drehen('z', true, false);
@@ -855,7 +777,7 @@ int main(void)
 	}
 
 	// alle Texturen im Vector unterbringen
-	textures.push_back((GLuint) 0);
+	textures.push_back((GLuint)0);
 	textures.push_back(loadBMP_custom("standardtextur.bmp"));
 	textures.push_back(loadBMP_custom("tex_rot.bmp"));
 	textures.push_back(loadBMP_custom("tex_gruen.bmp"));
@@ -885,49 +807,8 @@ int main(void)
 
 	//HIER GEHTS EIGENTLICH LOS
 
-	std::vector<glm::vec3> vertices; //Punkte
-	std::vector<glm::vec2> uvs;		//Texturkoordinaten
-	std::vector<glm::vec3> normals; //Normalenvektoren
-	bool res = loadOBJ("teapot.obj", vertices, uvs, normals);
 	glm::vec3 lightPos = glm::vec3(-10, 10, -10);
 
-
-	// Jedes Objekt eigenem VAO zuordnen, damit mehrere Objekte moeglich sind
-	// VAOs sind Container fuer mehrere Buffer, die zusammen gesetzt werden sollen.
-	GLuint VertexArrayIDTeapot;
-	glGenVertexArrays(1, &VertexArrayIDTeapot);
-	glBindVertexArray(VertexArrayIDTeapot);
-
-	// Ein ArrayBuffer speichert Daten zu Eckpunkten (hier xyz bzw. Position)
-	GLuint vertexbuffer;
-	glGenBuffers(1, &vertexbuffer); // Kennung erhalten
-	glBindBuffer(GL_ARRAY_BUFFER, vertexbuffer); // Daten zur Kennung definieren
-												 // Buffer zugreifbar für die Shader machen
-	glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(glm::vec3), &vertices[0], GL_STATIC_DRAW);
-
-	// Erst nach glEnableVertexAttribArray kann DrawArrays auf die Daten zugreifen...
-	glEnableVertexAttribArray(0); // siehe layout im vertex shader: location = 0 
-	glVertexAttribPointer(0,  // location = 0 
-		3,  // Datenformat vec3: 3 floats fuer xyz 
-		GL_FLOAT,
-		GL_FALSE, // Fixedpoint data normalisieren ?
-		0, // Eckpunkte direkt hintereinander gespeichert
-		(void*)0); // abweichender Datenanfang ? 
-
-	GLuint normalbuffer; // Hier alles analog für Normalen in location == 2
-	glGenBuffers(1, &normalbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, normalbuffer);
-	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(glm::vec3), &normals[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(2); // siehe layout im vertex shader 
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 0, (void*)0);
-
-
-	GLuint uvbuffer; // Hier alles analog für Texturkoordinaten in location == 1 (2 floats u und v!)
-	glGenBuffers(1, &uvbuffer);
-	glBindBuffer(GL_ARRAY_BUFFER, uvbuffer);
-	glBufferData(GL_ARRAY_BUFFER, uvs.size() * sizeof(glm::vec2), &uvs[0], GL_STATIC_DRAW);
-	glEnableVertexAttribArray(1); // siehe layout im vertex shader 
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 0, (void*)0);
 
 	// Load the texture
 	GLuint Texture = loadBMP_custom("standardtextur.bmp");
@@ -936,11 +817,10 @@ int main(void)
 	glfwSetKeyCallback(window, key_callback);
 
 	// Dark blue background: R, G, B, Alpha
-	//glClearColor(0.5f, 0.1f, 0.8f, 0.5f);
+	// glClearColor(0.5f, 0.1f, 0.8f, 0.5f);
 	glClearColor(0.0f, 0.6f, 1.0f, 1.0f);
 
-	// Create and compile our GLSL program from the shaders
-//	programID = LoadShaders("TransformVertexShader.vertexshader","ColorFragmentShader.fragmentshader");
+	// Create and compile our GLSL program from the shaders//	programID = LoadShaders("TransformVertexShader.vertexshader","ColorFragmentShader.fragmentshader");
 	programID = LoadShaders("StandardShading.vertexshader", "StandardShading.fragmentshader");
 
 	// Text initialisieren
@@ -959,15 +839,9 @@ int main(void)
 	// Bind our texture in Texture Unit 0
 	glActiveTexture(GL_TEXTURE0);
 
-	//GLuint Texture2 = loadBMP_custom("standardtextur_rot.bmp");
-
-	//glActiveTexture(GL_TEXTURE0);
-	//glBindTexture(GL_TEXTURE_2D, Texture2);
-
-		// Set our "myTextureSampler" sampler to user Texture Unit 0
 	glUniform1i(glGetUniformLocation(programID, "myTextureSampler"), 0);
 	//initSchacht();
-	falling = new stein(4,color(5));
+	falling = new stein(4, color(5));
 	time_t start2 = time(0);
 	time_t end2 = time(0);
 	float mult = 2.;
@@ -981,11 +855,11 @@ int main(void)
 	{
 		// Clear the screen
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//	std::cout << (float) timer2.getStart()<<"     "<<(double)timer2.duration() << std::endl;
-		
-		View = glm::lookAt(glm::vec3(0,0,2.5), // Camera is at (0,0,-10), in World Space
-		glm::vec3(0, 0, 0),  // and looks at the origin---- bildschirmmitte
-		glm::vec3(0, 1, 0)); // Head is up (set to 0,-1,0 to look upside-down) ---- in welche richtung gehts nach oben
+		//	std::cout << (float) timer2.getStart()<<"     "<<(double)timer2.duration() << std::endl;
+
+		View = glm::lookAt(glm::vec3(0, 0, 2.5), // Camera is at (0,0,-10), in World Space
+			glm::vec3(0, 0, 0),  // and looks at the origin---- bildschirmmitte
+			glm::vec3(0, 1, 0)); // Head is up (set to 0,-1,0 to look upside-down) ---- in welche richtung gehts nach oben
 
 		drawBackground();
 
@@ -1005,13 +879,13 @@ int main(void)
 		// Projection matrix : 45° Field of View, 4:3 ratio, display range : 0.1 unit <-> 100 units
 		Projection = glm::perspective(25.0f, 4.0f / 3.0f, 0.1f, 150.0f); //Stichpunkt: Frontplane und Backplane
 
-		// Camera matrix, ---- hier linkshändig (manipulierbar durch erste zeile. wenn positiver z wert dann rechtshändig
-			View = glm::lookAt(glm::vec3(40 + zoom, 40, 40 + zoom), // Camera is at (0,0,-10), in World Space
-		    glm::vec3(0, 0, 0),  // and looks at the origin---- bildschirmmitte
+																		 // Camera matrix, ---- hier linkshändig (manipulierbar durch erste zeile. wenn positiver z wert dann rechtshändig
+		View = glm::lookAt(glm::vec3(40 + zoom, 40, 40 + zoom), // Camera is at (0,0,-10), in World Space
+			glm::vec3(0, 0, 0),  // and looks at the origin---- bildschirmmitte
 			glm::vec3(0, 1, 0)); // Head is up (set to 0,-1,0 to look upside-down) ---- in welche richtung gehts nach oben
 
 
-// Model matrix : an identity matrix (model will be at the origin) erzeugt 4x4 Einheitsmatrix
+								 // Model matrix : an identity matrix (model will be at the origin) erzeugt 4x4 Einheitsmatrix
 		Model = glm::mat4(1.0f);
 		Model = glm::rotate(Model, turnY, glm::vec3(0, 1, 0));
 		Model = glm::rotate(Model, turnX, glm::vec3(1, 0, 0));
@@ -1027,16 +901,16 @@ int main(void)
 
 
 		drawTiles();
-	//	drawWallX();
+		//	drawWallX();
 		draw();
-		
+
 		if (blinkFlag2 == false) {
 			if (end2 - start2 > timeStep) {
 				start2 = time(0);
 				dropStein(-1);
 			}
 			end2 = time(0);
-		completedLines();
+			completedLines();
 		}
 
 		if (blinkFlag) {
@@ -1047,44 +921,44 @@ int main(void)
 		if (blinkFlag2) {
 			//start = time(0);
 			//end = time(0);
-			if (timer1.duration() <=0.5){
-				std::cout << "null" << "     "<<timer1.duration() << std::endl;
+			if (timer1.duration() <= 0.5) {
+				std::cout << "null" << "     " << timer1.duration() << std::endl;
 				schacht_array = uebergangs_schacht;
-	//			timer1.reset();
+				//			timer1.reset();
 			}
-			
-			else if ((timer1.duration() <=1.0)&& (timer1.duration()>0.5)) {
-			//	std::cout << "eins" << "     " << end - start<<std::endl;
+
+			else if ((timer1.duration() <= 1.0) && (timer1.duration()>0.5)) {
+				//	std::cout << "eins" << "     " << end - start<<std::endl;
 				schacht_array = old_schacht;
-				
 
-			//	end = time(0);
+
+				//	end = time(0);
 
 			}
 
-			else if ((timer1.duration() <=1.5) && (timer1.duration()>1.0)) {
-//				std::cout << "zwei" << "     " << end - start << std::endl;
+			else if ((timer1.duration() <= 1.5) && (timer1.duration()>1.0)) {
+				//				std::cout << "zwei" << "     " << end - start << std::endl;
 				schacht_array = uebergangs_schacht;
-	//			end = time(0);
+				//			end = time(0);
 			}
-			
+
 			else if ((timer1.duration() <= 2.0) && (timer1.duration()>1.5)) {
-		//		std::cout << "drei" << "     " << end - start << std::endl;
+				//		std::cout << "drei" << "     " << end - start << std::endl;
 				schacht_array = old_schacht;
-			//	end = time(0);
+				//	end = time(0);
 
 			}
 
 			else if ((timer1.duration() <= 2.5) && (timer1.duration()>2.0)) {
-		//		std::cout << "vier" << "     " << end - start << std::endl;
+				//		std::cout << "vier" << "     " << end - start << std::endl;
 				schacht_array = uebergangs_schacht;
-			//	end = time(0);
+				//	end = time(0);
 			}
 			else {
 				schacht_array = fresh_schacht;
-	//			std::cout << "final" << "     " << end - start << std::endl;
-			//	end = time(0);
-			//	start = time(0);
+				//			std::cout << "final" << "     " << end - start << std::endl;
+				//	end = time(0);
+				//	start = time(0);
 				blinkFlag2 = false;
 			}
 
@@ -1111,7 +985,7 @@ int main(void)
 
 	cleanupText2D();
 	glDeleteBuffers(1, &vertexbuffer);
-	glDeleteBuffers(1, &normalbuffer);
+	//glDeleteBuffers(1, &normalbuffer);
 
 	glDeleteBuffers(1, &uvbuffer);
 	glDeleteTextures(1, &Texture);
